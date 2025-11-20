@@ -377,11 +377,17 @@ function renderNotFound() {
 // =====================
 // ROUTER CORE
 // =====================
+// =====================
+// ROUTER CORE
+// =====================
 const routes = [
     { path: "/", view: renderHome },
     { path: "/upload", view: renderUpload },
     { path: "/login", view: renderLogin },
-    { path: "/register", view: renderRegister }
+    { path: "/register", view: renderRegister },
+    
+    // AGGIUNGI QUESTA RIGA QUI SOTTO:
+    { path: "/stats", view: renderStats } 
 ];
 
 async function router() {
@@ -412,7 +418,79 @@ function navigateTo(url) {
 }
 
 window.addEventListener("popstate", router);
+// ==========================================
+// PAGINA STATISTICHE (SOLO ADMIN)
+// ==========================================
+async function renderStats() {
+    // 1. Protezione: Se non sei admin, ti rimando alla home
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert("Accesso negato: Area riservata agli amministratori.");
+        return navigateTo("/");
+    }
 
+    const app = document.getElementById("app");
+    app.innerHTML = '<div class="loading">Caricamento statistiche...</div>';
+
+    try {
+        // 2. Chiamata API
+        const stats = await apiGet("/admin/stats");
+
+        if (stats.error) {
+            app.innerHTML = `<h3 style="color:red">Errore: ${stats.error}</h3>`;
+            return;
+        }
+
+        // 3. Disegno la Dashboard
+        app.innerHTML = `
+            <h1>📊 Pannello Amministratore</h1>
+            <button onclick="navigateTo('/')" style="margin-bottom:20px; background:#666">← Torna alla Home</button>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+                
+                <div class="info-box" style="background:white; border:1px solid #ddd">
+                    <h3 style="border-bottom:2px solid #4caf50; padding-bottom:10px;">🏆 Top 5 Download</h3>
+                    <ul style="list-style:none; padding:0; margin-top:10px">
+                        ${stats.top_downloads.map((t, i) => `
+                            <li style="padding:8px 0; border-bottom:1px solid #eee">
+                                <strong>#${i+1}</strong> <a href="/torrent/${t._id}" data-link>${t.title}</a>
+                                <span style="float:right; color:#666">⬇ ${t.total_downloads}</span>
+                            </li>
+                        `).join("")}
+                    </ul>
+                </div>
+
+                <div class="info-box" style="background:white; border:1px solid #ddd">
+                    <h3 style="border-bottom:2px solid #2196F3; padding-bottom:10px;">📚 Categorie Popolari</h3>
+                    <ul style="list-style:none; padding:0; margin-top:10px">
+                        ${stats.popular_categories.map(c => `
+                            <li style="padding:8px 0; border-bottom:1px solid #eee">
+                                <strong>${c._id}</strong>
+                                <span style="float:right; background:#eee; padding:2px 8px; border-radius:10px">${c.count} file</span>
+                            </li>
+                        `).join("")}
+                    </ul>
+                </div>
+
+                <div class="info-box" style="background:white; border:1px solid #ddd">
+                    <h3 style="border-bottom:2px solid #ff9800; padding-bottom:10px;">📅 Nuovi (Ultimi 7gg)</h3>
+                    ${stats.new_torrents_last_week.length === 0 ? '<p>Nessun nuovo arrivo.</p>' : ''}
+                    <ul style="list-style:none; padding:0; margin-top:10px">
+                        ${stats.new_torrents_last_week.map(c => `
+                            <li style="padding:8px 0; border-bottom:1px solid #eee">
+                                <strong>${c._id}</strong>
+                                <span style="float:right; color:green">+${c.count}</span>
+                            </li>
+                        `).join("")}
+                    </ul>
+                </div>
+
+            </div>
+        `;
+    } catch (err) {
+        console.error(err);
+        app.innerHTML = "Errore nel caricamento delle statistiche.";
+    }
+}
 document.addEventListener("DOMContentLoaded", () => {
     document.body.addEventListener("click", e => {
         if (e.target.matches("[data-link]")) {
