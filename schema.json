@@ -1,0 +1,131 @@
+{
+  "database": "Torrent_Sharing",
+  "collections": {
+    "users": {
+      "description": "Utenti registrati con ruoli (user, moderator, admin)",
+      "schema": {
+        "bsonType": "object",
+        "required": [
+          "username",
+          "email",
+          "password_hash",
+          "role",
+          "banned",
+          "created_at"
+        ],
+        "properties": {
+          "_id": { "bsonType": "objectId" },
+          "username": { "bsonType": "string" },
+          "email": { "bsonType": "string" },
+          "password_hash": { "bsonType": "string" },
+          "role": {
+            "bsonType": "string",
+            "enum": ["user", "moderator", "admin"]
+          },
+          "banned": { "bsonType": "bool" },
+          "created_at": { "bsonType": "date" }
+        }
+      },
+      "indexes": [
+        { "email": 1, "unique": true }
+      ]
+    },
+
+    "torrents": {
+      "description": "Torrent caricati dagli utenti",
+      "schema": {
+        "bsonType": "object",
+        "required": [
+          "title",
+          "description",
+          "size",
+          "categories",
+          "images",
+          "file_path",
+          "author_id",
+          "created_at",
+          "deleted",
+          "avg_rating",
+          "total_ratings",
+          "total_downloads"
+        ],
+        "properties": {
+          "_id": { "bsonType": "objectId" },
+          "title": { "bsonType": "string" },
+          "description": { "bsonType": "string" },
+          "size": { "bsonType": "int" },
+          "categories": {
+            "bsonType": "array",
+            "items": { "bsonType": "string" }
+          },
+          "images": {
+            "bsonType": "array",
+            "items": { "bsonType": "string" }
+          },
+          "file_path": { "bsonType": "string" },
+          "author_id": { "bsonType": "objectId" },
+          "created_at": { "bsonType": "date" },
+          "deleted": { "bsonType": "bool" },
+          "avg_rating": { "bsonType": "double" },
+          "total_ratings": { "bsonType": "int" },
+          "total_downloads": { "bsonType": "int" }
+        }
+      },
+      "indexes": [
+        { "title": "text", "description": "text" },
+        { "categories": 1 },
+        { "created_at": -1 }
+      ]
+    },
+
+    "comments": {
+      "description": "Commenti e valutazioni lasciati dagli utenti",
+      "schema": {
+        "bsonType": "object",
+        "required": [
+          "torrent_id",
+          "user_id",
+          "rating",
+          "text",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "_id": { "bsonType": "objectId" },
+          "torrent_id": { "bsonType": "objectId" },
+          "user_id": { "bsonType": "objectId" },
+          "rating": {
+            "bsonType": "int",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "text": { "bsonType": "string" },
+          "created_at": { "bsonType": "date" },
+          "updated_at": { "bsonType": "date" }
+        }
+      },
+      "indexes": [
+        { "torrent_id": 1 },
+        { "user_id": 1 }
+      ]
+    },
+
+    "downloads": {
+      "description": "Storico dei download effettuati dagli utenti",
+      "schema": {
+        "bsonType": "object",
+        "required": ["torrent_id", "user_id", "downloaded_at"],
+        "properties": {
+          "_id": { "bsonType": "objectId" },
+          "torrent_id": { "bsonType": "objectId" },
+          "user_id": { "bsonType": "objectId" },
+          "downloaded_at": { "bsonType": "date" }
+        }
+      },
+      "indexes": [
+        { "torrent_id": 1 },
+        { "user_id": 1 }
+      ]
+    }
+  }
+}
